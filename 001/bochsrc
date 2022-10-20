@@ -1,0 +1,3 @@
+floppya: 1_44=boot.img, status=inserted  # Use Floppy Disk A for booting
+boot: floppy
+display_library: sdl2
