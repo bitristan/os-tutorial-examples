@@ -1,3 +1,4 @@
-bootsect
 *.o
 *.img
+bootsect
+system
