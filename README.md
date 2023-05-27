@@ -21,9 +21,72 @@
 - 构造堆栈，使用iret指令执行任务0
 - 在时钟中断中切换任务0和任务1
 
+## 003-extra bochs debug
+
+在003工程中，使用qemu能运行成功，但是使用bochs运行的话，无法出现两个进程在屏幕交替输出。多半是程序有什么bug，我们来看一下如何调试解决这个问题。
+
+在bochs运行的时候往上看bochs的输出日志，可以发现如下信息
+```
+00014795176e[CPU0  ] write_virtual_checks(): no write access to seg
+00014795176e[CPU0  ] interrupt(): vector must be within IDT table limits, IDT.limit = 0x0
+00014795176e[CPU0  ] interrupt(): vector must be within IDT table limits, IDT.limit = 0x0
+00014795176i[CPU0  ] CPU is in protected mode (active)
+00014795176i[CPU0  ] CS.mode = 32 bit
+00014795176i[CPU0  ] SS.mode = 32 bit
+00014795176i[CPU0  ] EFER   = 0x00000000
+00014795176i[CPU0  ] | EAX=00080118  EBX=00000000  ECX=00000100  EDX=00008e00
+00014795176i[CPU0  ] | ESP=00000bd4  EBP=00000000  ESI=000e2000  EDI=00000198
+00014795176i[CPU0  ] | IOPL=0 id vip vif ac vm RF nt of df if tf sf ZF af PF cf
+00014795176i[CPU0  ] | SEG sltr(index|ti|rpl)     base    limit G D
+00014795176i[CPU0  ] |  CS:0008( 0001| 0|  0) 00000000 007fffff 1 1
+00014795176i[CPU0  ] |  DS:0008( 0001| 0|  0) 00000000 007fffff 1 1
+00014795176i[CPU0  ] |  SS:0010( 0002| 0|  0) 00000000 007fffff 1 1
+00014795176i[CPU0  ] |  ES:0000( 0005| 0|  0) 00000000 0000ffff 0 0
+00014795176i[CPU0  ] |  FS:0000( 0005| 0|  0) 00000000 0000ffff 0 0
+00014795176i[CPU0  ] |  GS:0000( 0005| 0|  0) 00000000 0000ffff 0 0
+00014795176i[CPU0  ] | EIP=000000d2 (000000d2)
+00014795176i[CPU0  ] | CR0=0x60000011 CR2=0x00000000
+00014795176i[CPU0  ] | CR3=0x00000000 CR4=0x00000000
+(0).[14795176] [0x0000000000d2] 0008:000000d2 (unk. ctxt): mov dword ptr ds:[edi], eax ; 8907
+00014795176e[CPU0  ] exception(): 3rd (13) exception with no resolution, shutdown status is 00h, resetting
+00014795176i[SYS   ] bx_pc_system_c::Reset(HARDWARE) called
+00014795176i[CPU0  ] cpu hardware reset
+00014795176i[APIC0 ] allocate APIC id=0 (MMIO enabled) to 0x0000fee00000
+```
+
+如果觉得命令行查看日志不方便的话，可以在bochsrc配置文件中加入如下一行，这样log就会输出到指定的文件中
+```
+log: output.log
+```
+
+下面我们根据错误日志来分析bug：
+
+在错误日志中，我们先看EIP，看是哪条指令出错了，发现 EIP=000000d2
+
+怎么查看0xd2处是哪条指令呢？
+
+1. 由于进入head.s之后，我们的代码是从0x00处开始执行，所以可以重新进入bochs，使用 `b 0x00` 设置断点在物理地址0x00处，然后使用 `c` 指令执行到断点处
+2. 然后使用 `u /100` 反汇编当前地址往下的100条指令，很容易看到 0xd2 处的指令
+```
+000000c0: (                    ): mov ax, dx                ; 6689d0
+000000c3: (                    ): mov dx, 0x8e00            ; 66ba008e
+000000c7: (                    ): lea edi, ds:0x00000198    ; 8d3d98010000
+000000cd: (                    ): mov ecx, 0x00000100       ; b900010000
+000000d2: (                    ): mov dword ptr ds:[edi], eax ; 8907
+000000d4: (                    ): mov dword ptr ds:[edi+4], edx ; 895704
+
+```
+3. 根据指令操作的寄存器和操作数的值应该很容易可以对应到源文件head.s中的代码，是第80行的movl操作出错
+```
+    movl %eax, (%edi)
+```
+4. 使用 `b 0xd2` 设置断点在出错的这行指令处 (其实也可以省略步骤2和3，直接设置断点在 `0xd2` 处，然后使用 `u` 查看当前出错的指令)
+5. 查看当前各种寄存器的值，分析为什么这条movl指令会出错，很容易看出，因为ds寄存器为0x08，是代码段选择符，因为代码段不可写，所以执行movl会报错，很明显ds寄存器应该设置为数据段选择符，由于我们的笔误写错了
+6. 修复ds寄存器的赋值问题就行了，具体改动见本次commit，再次run_bochs运行成功。(为什么qemu能成功运行，这个很奇怪!)
+
 
 ## FAQ
 
-### linux下无法执行run_bochs
+### bochs运行
 
-在linux下需要将bochsrc配置文件中的display_library一行注释掉，mac系统下运行需要设置display_library
+在mac下运行bochs需要添加参数: 'display_library: sdl2'

@@ -12,14 +12,14 @@
     .equ LDT1_SEL, 0x38
 
 start:
-    movl $SYSCODE_SEL, %eax
+    movl $SYSDATA_SEL, %eax
     mov %ax, %ds
     lss init_stack, %esp
 
     call setup_idt
     call setup_gdt
 
-    movl $SYSCODE_SEL, %eax
+    movl $SYSDATA_SEL, %eax
     mov %ax, %ds
     mov %ax, %es
     mov %ax, %fs
