@@ -100,6 +100,10 @@ log: output.log
 
 具体详细规范见multiboot官方文档 [Multiboot Specification version 0.6.96](https://www.gnu.org/software/grub/manual/multiboot/multiboot.html)
 
+## 005 multiboot with grub
+
+使用grub制作iso内核镜像
+
 
 ## FAQ
 
