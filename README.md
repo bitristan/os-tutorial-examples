@@ -84,6 +84,22 @@ log: output.log
 5. 查看当前各种寄存器的值，分析为什么这条movl指令会出错，很容易看出，因为ds寄存器为0x08，是代码段选择符，因为代码段不可写，所以执行movl会报错，很明显ds寄存器应该设置为数据段选择符，由于我们的笔误写错了
 6. 修复ds寄存器的赋值问题就行了，具体改动见本次commit，再次run_bochs运行成功。(为什么qemu能成功运行，这个很奇怪!)
 
+## 004 multiboot
+
+使用multiboot规范加载操作系统内核映像
+
+1. 操作系统内核文件需要为elf格式
+2. 操作系统被加载到0x100000处执行，所以编译的时候需要使用 -Ttext=0x100000 设置代码段偏移
+3. qemu支持multiboot启动，使用 -kernel 参数指定内核文件
+4. multiboot启动跳转到entry处执行时
+   - 内核默认开启保护模式
+   - eax寄存器的值为0x2BADB002，表明操作系统已经被兼容Multiboot规范的bootloader加载成功
+   - 代码段偏移为0，段限长为0xFFFFFFFF，数据段偏移为0，段限长为0xFFFFFFFF
+   - 不开启分页模式
+   - 关闭中断
+
+具体详细规范见multiboot官方文档 [Multiboot Specification version 0.6.96](https://www.gnu.org/software/grub/manual/multiboot/multiboot.html)
+
 
 ## FAQ
 
