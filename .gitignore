@@ -2,3 +2,6 @@
 *.img
 bootsect
 system
+kernel.elf
+*.iso
+kernel

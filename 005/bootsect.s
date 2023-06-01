@@ -33,5 +33,4 @@ start:
     addl $2, %edi
     movw %ax, (%edi)
 
-    cli
     hlt

@@ -94,6 +94,7 @@ log: output.log
 4. multiboot启动跳转到entry处执行时
    - 内核默认开启保护模式
    - eax寄存器的值为0x2BADB002，表明操作系统已经被兼容Multiboot规范的bootloader加载成功
+   - ebx寄存器包含Multiboot信息数据结构的物理地址，通过它，启动载入器向操作系统传递重要信息
    - 代码段偏移为0，段限长为0xFFFFFFFF，数据段偏移为0，段限长为0xFFFFFFFF
    - 不开启分页模式
    - 关闭中断
@@ -103,6 +104,12 @@ log: output.log
 ## 005 multiboot with grub
 
 使用grub制作iso内核镜像
+
+## 006 multiboot with c integrate
+
+集成c语言环境。
+
+- 由于c语言依赖栈，所以我们需要首先设置esp寄存器。在bootsect.s中，我们在bss段中定义了一个16KB大小的空间，stack_top指向此空间的高地址，将stack_top设置为栈顶即可。
 
 
 ## FAQ
