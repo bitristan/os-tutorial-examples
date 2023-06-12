@@ -111,6 +111,10 @@ log: output.log
 
 - 由于c语言依赖栈，所以我们需要首先设置esp寄存器。在bootsect.s中，我们在bss段中定义了一个16KB大小的空间，stack_top指向此空间的高地址，将stack_top设置为栈顶即可。
 
+## 007 read hard disk
+
+从硬盘启动，从硬盘读取loader并执行
+
 
 ## FAQ
 
