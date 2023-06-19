@@ -111,9 +111,21 @@ log: output.log
 
 - 由于c语言依赖栈，所以我们需要首先设置esp寄存器。在bootsect.s中，我们在bss段中定义了一个16KB大小的空间，stack_top指向此空间的高地址，将stack_top设置为栈顶即可。
 
-## 007 read hard disk
+## 007 boot from hard disk
 
 从硬盘启动，从硬盘读取loader并执行
+
+## 008 read ide hard disk in LBA mode
+
+LBA模式读取ide硬盘
+
+0x1f2: 读取扇区数
+0x1f3: LBA低8位
+0x1f4: LBA中8位
+0x1f5: LBA高8位
+0x1f6: 0-3位为LBA的24-27位，第4位为0表示主盘，第5位为1表示LBA模式，0表示CHS模式，第6位为1，第7位为1
+
+本例中，读取boot.img的第1个扇区（从0开始）到内存便宜0x8000处，由于数据段从0x10000开始，所以最终数据会读到0x18000处，具体可以使用bochs调试查看。
 
 
 ## FAQ
