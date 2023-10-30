@@ -138,6 +138,10 @@ LBA模式读取ide硬盘
 
 使用c语言读取ide硬盘
 
+## 010 arm64 qemu virt bare bone
+
+arm64裸机输出hello (只支持linux平台)
+
 ## FAQ
 
 ### bochs运行
